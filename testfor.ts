@@ -1,67 +1,47 @@
 export class TestFor {
-  public static closeEnough(obj_a: any, obj_b: any, epsilon: number): boolean {
-    // Tests if two objects are close enough to each other.
-    // If they are dirrefrent in type, they are not close enough.
-    if (typeof obj_a !== typeof obj_b) return false;
-    // If they are both undefined, they are equal
-    if (!obj_a && !obj_b) return true;
-    // If they are both null, they are equal
-    if (obj_a === null && obj_b === null) return true;
-    // If they are numbers and teir difference is close enough to epsilon, they are equal
-    if (typeof obj_a === 'number') return Math.abs(obj_a - obj_b) < epsilon;
-    // If they are both strings, they are equal if they are equal
-    if (typeof obj_a === 'string') return obj_a === obj_b;
-    // If they are both objects, they are equal if less than epsilon of their properties are different
-    if (typeof obj_a === 'object') {
-      const obj_a_asarray: any = Object.entries(obj_a);
-      const obj_b_asarray: any = Object.entries(obj_b);
-      if (Math.abs(obj_a_asarray.length - obj_b_asarray.length) > epsilon) return false;
-      let number_of_true_values = 0;
-      for (let i = 0; i < obj_a_asarray.length; i++) {
-        const key_a: any = obj_a_asarray[i][0];
-        const key_b: any = obj_b_asarray.find(([key, value]) => key === key_a);
-        const value_a: any = obj_a_asarray[i][1];
-        const value_b: any = obj_b_asarray.find(([key, value]) => value === value_a);
-        if (key_b && value_b && key_a === key_b[0] && value_a === value_b[1])
-          number_of_true_values++;
-      }
-      if (obj_a_asarray.length < number_of_true_values + epsilon) return true;
+  private static deepEqual(val1, val2) {
+    if (typeof val1 !== typeof val2) {
+      return false;
     }
-    return false;
+
+    if (typeof val1 !== 'object' || val1 === null) {
+      return val1 === val2;
+    }
+
+    if (Array.isArray(val1)) {
+      if (!Array.isArray(val2) || val1.length !== val2.length) {
+        return false;
+      }
+      return val1.every((item, index) => this.deepEqual(item, val2[index]));
+    }
+
+    const keys1 = Object.keys(val1);
+    const keys2 = Object.keys(val2);
+
+    if (keys1.length !== keys2.length) {
+      return false;
+    }
+
+    return keys1.every(key => this.deepEqual(val1[key], val2[key]));
   }
 
-  public static exactDifference(obj_a: any, obj_b: any, epsilon: number): boolean {
-    // Tests if two objects are close enough to each other but also not closer than expected.
-    // If they are dirrefrent in type, they are not close enough.
-    if (typeof obj_a !== typeof obj_b) return false;
-    // If they are both undefined, they are equal
-    if (!obj_a && !obj_b) return true;
-    // If they are both null, they are equal
-    if (obj_a === null && obj_b === null) return true;
-    // If they are numbers and teir difference is close enough to epsilon, they are equal
-    if (typeof obj_a === 'number') return Math.abs(obj_a - obj_b) < epsilon;
-    // If they are both strings, they are equal if they are equal
-    if (typeof obj_a === 'string') return obj_a === obj_b;
-    // If they are both objects, they are equal if less than epsilon of their properties are different
-    // and not more than expected are the same
-    if (typeof obj_a === 'object') {
-      const obj_a_asarray: any = Object.entries(obj_a);
-      const obj_b_asarray: any = Object.entries(obj_b);
-      if (Math.abs(obj_a_asarray.length - obj_b_asarray.length) > epsilon) return false;
-      let number_of_true_values = 0;
-      let number_of_false_values = 0;
-      for (let i = 0; i < obj_a_asarray.length; i++) {
-        const key_a: any = obj_a_asarray[i][0];
-        const key_b: any = obj_b_asarray.find(([key, value]) => key === key_a);
-        const value_a: any = obj_a_asarray[i][1];
-        const value_b: any = obj_b_asarray.find(([key, value]) => value === value_a);
-        if (key_b && value_b && key_a === key_b[0] && value_a === value_b[1])
-          number_of_true_values++;
-        else number_of_false_values++;
-      }
-      if ((obj_a_asarray.length < number_of_true_values + epsilon) &&
-        (obj_a_asarray.length >= number_of_false_values + epsilon)) return true;
-    }
-    return false;
+  public static closeEnough(obj1, obj2, n) {
+    const equalProperties = Object.keys(obj1).filter(
+      key => obj1.hasOwnProperty(key) && obj2.hasOwnProperty(key) && obj1[key] === obj2[key]
+    ).length;
+
+    return equalProperties >= n;
+  }
+
+  public static closeEnoughDeep(obj1, obj2, n) {
+    const equalProperties = Object.keys(obj1).filter(
+      key => obj1.hasOwnProperty(key) && obj2.hasOwnProperty(key) && this.deepEqual(obj1[key], obj2[key])
+    ).length;
+
+    return equalProperties >= n;
+  }
+
+  public static exactEquality(obj1, obj2) {
+    return this.deepEqual(obj1, obj2);
   }
 }
